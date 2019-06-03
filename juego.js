@@ -45,7 +45,7 @@ Sprite = function () {
         };
     };
 
-    this.color = '#e6e600';
+    this.color = '#e6e601';
     this.solido = true;
     this.visible = false;
     this.usado = false;
