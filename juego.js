@@ -285,8 +285,10 @@ Juego = {
         },
 
         inicio: function () {
+			
             Juego.crearAsteroides();
             this.state = 'crearNave';
+
         },
 
         crearNave: function () {
@@ -294,8 +296,12 @@ Juego = {
             Juego.nave.y = Juego.canvasHeight / 2;
             Juego.nave.rotar = 0;
             Juego.nave.velocidad.x = 0;
-            Juego.nave.velocidad.y = 0;
+            Juego.nave.velocidad.y = 0
+			
+			Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
+
             Juego.nave.visible = true;
+			
         },
 
         ejecutar: function () {
