@@ -298,7 +298,7 @@ Juego = {
             Juego.nave.velocidad.x = 0;
             Juego.nave.velocidad.y = 0
 			
-			Text.renderTexto('Contador: 00', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
+			Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
 
             Juego.nave.visible = true;
 			
