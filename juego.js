@@ -45,6 +45,7 @@ Sprite = function () {
         };
     };
 
+    this.rotarBan=true;
     this.color = '#e6e601';
     this.solido = true;
     this.visible = false;
@@ -135,6 +136,23 @@ Sprite = function () {
 
 };
 
+Vida = function () {
+    this.init("vida",
+        [0,   0,
+        10,10,
+        20,0,
+        15,-10,
+        10,-5,
+        5,-10
+        ]);
+
+    this.color = '#FF3333';
+    this.solid = true;
+    this.visible = true;
+    this.scale = 1;
+};
+Vida.prototype= new Sprite();
+
 Asteroide = function () {
     this.init("asteroide",
         [-10, 7,
@@ -157,6 +175,7 @@ Asteroide = function () {
 Asteroide.prototype = new Sprite();
 
 Nave = function () {
+	var img=document.createElement("img");
     this.init("nave",
         [-6,   7,
             0, -11,
@@ -251,6 +270,19 @@ Juego = {
     sprites: [],
     nave: null,
 
+    crearVidas: function (numero) {
+        for (var i = 0; i < numero; i++) {
+            var vida = new Vida();
+            vida.x = Math.random() * this.canvasWidth;
+            vida.y = Math.random() * this.canvasHeight;
+            vida.velocidad.x = Math.random() * 4 - 2;
+            vida.velocidad.y = Math.random() * 4 - 2;
+            vida.rotar=0;
+            Juego.sprites.push(vida);
+            //await sleep(50000);
+        }
+    },
+
     crearAsteroides: function (numero) {
         if (!numero) numero = this.totalAsteroids;
         for (var i = 0; i < numero; i++) {
@@ -268,14 +300,15 @@ Juego = {
     },
 
     Control: {
-        boot: function () {
+        boot: function () {        	
+            Juego.crearVidas(1);
             Juego.crearAsteroides(10);
             this.state = 'esperar';
         },
 
         esperar: function () {
             Text.renderTexto('PROYECTO SOFTWARE II', 30, Juego.canvasWidth / 2 + 200, Juego.canvasHeight);
-            Text.renderTexto('ASTEROIDES', 40, Juego.canvasWidth / 2 - 140, Juego.canvasHeight / 5);
+            Text.renderTexto('Star SHIP', 40, Juego.canvasWidth / 2 - 140, Juego.canvasHeight / 5);
             Text.renderTexto('Presione espacio para comenzar', 36, Juego.canvasWidth / 2 - 370, Juego.canvasHeight / 2);
             if (ESTADO_TECLA.espacio || window.gameStart) {
                 ESTADO_TECLA.espacio = false;
@@ -285,7 +318,6 @@ Juego = {
         },
 
         inicio: function () {
-			
             Juego.crearAsteroides();
             this.state = 'crearNave';
 
@@ -299,6 +331,7 @@ Juego = {
             Juego.nave.velocidad.y = 0
 			
 			Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
+			Text.renderTexto('Vidas: 0003', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
 
             Juego.nave.visible = true;
 			
