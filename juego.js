@@ -45,6 +45,7 @@ Sprite = function () {
         };
     };
 
+    this.hijos = {};
     this.color = '#e6e600';
     this.solido = true;
     this.visible = false;
@@ -52,7 +53,7 @@ Sprite = function () {
     this.x = 0;
     this.y = 0;
     this.rotar = 0;
-    this.scale = 1;
+    this.escala = 1;
     this.preMove = null;
     this.postMove = null;
 
@@ -94,16 +95,20 @@ Sprite = function () {
 
         this.context.translate(this.x, this.y);
         this.context.rotate(rad);
-        this.context.scale(this.scale, this.scale);
+        this.context.scale(this.escala, this.escala);
     };
 
     this.dibujar = function () {
         if (!this.visible) return;
 
-        this.context.lineWidth = 1.0 / this.scale;
+        this.context.lineWidth = 1.0 / this.escala;
+
+        for (hijo in this.hijos) {
+            this.hijos[hijo].dibujar();
+        }
+
         this.context.strokeStyle = this.color;
         this.context.fillStyle = this.color;
-
         this.context.beginPath();
 
         this.context.moveTo(this.puntos[0], this.puntos[1]);
@@ -135,6 +140,91 @@ Sprite = function () {
 
 };
 
+Nave = function () {
+    this.init("nave",
+        [0,8,
+            -3,8,
+            -1.5,6,
+            -4.5,6.6,
+            -4.5,8,
+            -5.4,8,
+            -5.4,6.8,
+            -8,7.2,
+            -7,4,
+            -5.4,2.4,
+            -5.4,-5,
+            -4.8,-6,
+            -4.5,-5,
+            -4.5,1.8,
+            -2.5,-5.2,
+            0,-11,
+            2.5,-5.2,
+            4.5,1.8,
+            4.5,-5,
+            4.8,-6,
+            5.4,-5,
+            5.4,2.4,
+            7,4,
+            8,7.2,
+            5.4,6.8,
+            5.4,8,
+            4.5,8,
+            4.5,6.6,
+            1.5,6,
+            3,8,]);
+
+    this.color = '#8533ff';
+    this.solido = true;
+    this.escala = 2.3;
+
+    this.hijos.escape = new Sprite();
+    this.hijos.escape.solido = true;
+    this.hijos.escape.color = 'red';
+    this.hijos.escape.init("escape",
+        [-3,  6,
+            0, 11,
+            3,  6]);
+    this.postMove = this.wrapPostMover;
+
+    this.preMove = function (delta) {
+        if (ESTADO_TECLA.izquierda) {
+            this.velocidad.rot = -6;
+        } else if (ESTADO_TECLA.derecha) {
+            this.velocidad.rot  = 6;
+        } else {
+            this.velocidad.rot  = 0;
+        }
+
+        if (ESTADO_TECLA.arriba) {
+            var rad = ((this.rot-90) * Math.PI)/180;
+            this.aceleracion.x = 0.5 * Math.cos(rad);
+            this.aceleracion.y = 0.5 * Math.sin(rad);
+            this.hijos.escape.visible = Math.random() > 0.1;
+        } else {
+            this.aceleracion.x = 0;
+            this.aceleracion.y = 0;
+            this.hijos.escape.visible = false;
+        }
+
+        if (this.retrasoABala > 0) {
+            this.retrasoABala -= delta;
+        }
+        if (ESTADO_TECLA.espacio) {
+            if (this.retrasoABala <= 0) {
+                this.retrasoABala = 10;
+                this.disparar();
+            }
+        }
+
+        // limitar la velocidad de la nave
+        if (Math.sqrt(this.velocidad.x * this.velocidad.x + this.velocidad.y * this.velocidad.y) > 8) {
+            this.velocidad.x *= 0.95;
+            this.velocidad.y *= 0.95;
+        }
+    };
+};
+Nave.prototype = new Sprite();
+
 Asteroide = function () {
     this.init("asteroide",
         [-10, 7,
@@ -149,33 +239,14 @@ Asteroide = function () {
             -7, -2]);
 
     this.color = '#86592d';
-    this.solid = true;
+    this.solido = true;
     this.visible = true;
-    this.scale = 5;
+    this.escala = 5;
     this.postMove = this.wrapPostMover;
 };
 Asteroide.prototype = new Sprite();
 
-Nave = function () {
-    this.init("nave",
-        [-6,   7,
-            0, -11,
-            6,   7,
-            3,  4,
-            2,  7,
-            1,  4,
-            0,  7,
-            -1, 4,
-            -2, 7,
-            -3, 4,
-        ]);
 
-    this.color = '#8533ff';
-    this.solid = true;
-    this.scale = 3;
-
-};
-Nave.prototype = new Sprite();
 
 Text = {
     renderGlyphs: function (ctx, area, char) {
@@ -230,7 +301,7 @@ Text = {
         this.contenido.translate(x, y);
 
         var pixels = tamanio * 70 / (this.area.resolution * 100);
-        this.contenido.scale(pixels, -1 * pixels);
+        this.contenido.escala(pixels, -1 * pixels);
         this.contenido.beginPath();
         var chars = texto.split('');
         var charsLength = chars.length;
@@ -246,7 +317,11 @@ Text = {
 };
 
 Juego = {
-    canvasWidth: 1300,
+
+    vidas: 0,
+    puntaje: 0,
+    totalAsteroids: 5,
+    canvasWidth: 800,
     canvasHeight: 600,
     sprites: [],
     nave: null,
@@ -269,7 +344,7 @@ Juego = {
 
     Control: {
         boot: function () {
-            Juego.crearAsteroides(10);
+            Juego.crearAsteroides(this.totalAsteroids);
             this.state = 'esperar';
         },
 
@@ -285,10 +360,11 @@ Juego = {
         },
 
         inicio: function () {
-			
+            Juego.puntaje = 0;
+            Juego.vidas = 2;
+            Juego.totalAsteroids = 2;
             Juego.crearAsteroides();
             this.state = 'crearNave';
-
         },
 
         crearNave: function () {
@@ -297,11 +373,13 @@ Juego = {
             Juego.nave.rotar = 0;
             Juego.nave.velocidad.x = 0;
             Juego.nave.velocidad.y = 0
-			
 			Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
-
             Juego.nave.visible = true;
-			
+            this.state = 'run';
+        },
+
+        run: function () {
+            /*opciones juego*/
         },
 
         ejecutar: function () {
