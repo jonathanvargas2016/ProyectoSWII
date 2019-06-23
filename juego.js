@@ -149,7 +149,8 @@ Vida = function () {
     this.color = '#FF3333';
     this.solid = true;
     this.visible = true;
-    this.scale = 1;
+    this.scale = 1;    
+    this.postMove = this.wrapPostMover;
 };
 Vida.prototype= new Sprite();
 
@@ -274,7 +275,7 @@ Juego = {
         for (var i = 0; i < numero; i++) {
             var vida = new Vida();
             vida.x = Math.random() * this.canvasWidth;
-            vida.y = Math.random() * this.canvasHeight;
+            vida.y = 0;
             vida.velocidad.x = Math.random() * 4 - 2;
             vida.velocidad.y = Math.random() * 4 - 2;
             vida.rotar=0;
