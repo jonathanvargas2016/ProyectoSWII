@@ -35,36 +35,34 @@ Sprite = function () {
         this.velocidad = {
             x: 0,
             y: 0,
-            rotar: 0
+            rot: 0
         };
 
         this.aceleracion = {
             x: 0,
             y: 0,
-            rotar: 0
+            rot: 0
         };
     };
-
     this.hijos = {};
-    this.color = '#e6e600';
+
+    this.color = 'black';
     this.solido = true;
     this.visible = false;
     this.usado = false;
     this.x = 0;
     this.y = 0;
-    this.rotar = 0;
+    this.rot = 0;
     this.escala = 1;
     this.preMove = null;
     this.postMove = null;
 
     this.run = function (delta) {
-
         this.mover(delta);
-        this.context.save();
+        this.contenido.save();
         this.configTransformacion();
         this.dibujar();
-        this.context.restore();
-
+        this.contenido.restore();
     };
 
     this.mover = function (delta) {
@@ -76,11 +74,11 @@ Sprite = function () {
         this.velocidad.y += this.aceleracion.y * delta;
         this.x += this.velocidad.x * delta;
         this.y += this.velocidad.y * delta;
-        this.rotar += this.velocidad.rotar * delta;
-        if (this.rotar > 360) {
-            this.rotar -= 360;
-        } else if (this.rotar < 0) {
-            this.rotar += 360;
+        this.rot += this.velocidad.rot * delta;
+        if (this.rot > 360) {
+            this.rot -= 360;
+        } else if (this.rot < 0) {
+            this.rot += 360;
         }
 
         if ($.isFunction(this.postMove)) {
@@ -91,37 +89,37 @@ Sprite = function () {
     this.configTransformacion = function () {
         if (!this.visible) return;
 
-        var rad = (this.rotar * Math.PI) / 180;
+        var rad = (this.rot * Math.PI) / 180;
 
-        this.context.translate(this.x, this.y);
-        this.context.rotate(rad);
-        this.context.scale(this.escala, this.escala);
+        this.contenido.translate(this.x, this.y);
+        this.contenido.rotate(rad);
+        this.contenido.scale(this.escala, this.escala);
     };
 
     this.dibujar = function () {
         if (!this.visible) return;
 
-        this.context.lineWidth = 1.0 / this.escala;
+        this.contenido.lineWidth = 1.0 / this.escala;
 
         for (hijo in this.hijos) {
             this.hijos[hijo].dibujar();
         }
 
-        this.context.strokeStyle = this.color;
-        this.context.fillStyle = this.color;
-        this.context.beginPath();
+        this.contenido.strokeStyle = this.color;
+        this.contenido.fillStyle = this.color;
+        this.contenido.beginPath();
+        this.contenido.moveTo(this.puntos[0], this.puntos[1]);
 
-        this.context.moveTo(this.puntos[0], this.puntos[1]);
         for (var i = 1; i < this.puntos.length / 2; i++) {
             var xi = i * 2;
             var yi = xi + 1;
-            this.context.lineTo(this.puntos[xi], this.puntos[yi]);
+            this.contenido.lineTo(this.puntos[xi], this.puntos[yi]);
         }
 
-        this.context.closePath();
-        this.context.stroke();
+        this.contenido.closePath();
+        this.contenido.stroke();
         if (this.solido) {
-            this.context.fill();
+            this.contenido.fill();
         }
     };
 
@@ -137,11 +135,10 @@ Sprite = function () {
             this.y = Juego.canvasHeight;
         }
     };
-
 };
 
 Nave = function () {
-    this.init("nave",
+    this.init("ship",
         [0,8,
             -3,8,
             -1.5,6,
@@ -175,7 +172,7 @@ Nave = function () {
 
     this.color = '#8533ff';
     this.solido = true;
-    this.escala = 2.3;
+    this.escala = 2.5;
 
     this.hijos.escape = new Sprite();
     this.hijos.escape.solido = true;
@@ -184,7 +181,27 @@ Nave = function () {
         [-3,  6,
             0, 11,
             3,  6]);
+
+    this.retardoABala = 0;
     this.postMove = this.wrapPostMover;
+
+    this.disparo = function() {
+        for (var i = 0; i < this.balas.length; i++) {
+            if (!this.balas[i].visible) {
+                var bullet = this.balas[i];
+                var rad = ((this.rot-90) * Math.PI)/180;
+                var vectorx = Math.cos(rad);
+                var vectory = Math.sin(rad);
+                // mover la punta de la nave
+                bullet.x = this.x + vectorx * 4;
+                bullet.y = this.y + vectory * 4;
+                bullet.velocidad.x = 6 * vectorx + this.velocidad.x;
+                bullet.velocidad.y = 6 * vectory + this.velocidad.y;
+                bullet.visible = true;
+                break;
+            }
+        }
+    }
 
     this.preMove = function (delta) {
         if (ESTADO_TECLA.izquierda) {
@@ -206,13 +223,13 @@ Nave = function () {
             this.hijos.escape.visible = false;
         }
 
-        if (this.retrasoABala > 0) {
-            this.retrasoABala -= delta;
+        if (this.retardoABala > 0) {
+            this.retardoABala -= delta;
         }
         if (ESTADO_TECLA.espacio) {
-            if (this.retrasoABala <= 0) {
-                this.retrasoABala = 10;
-                this.disparar();
+            if (this.retardoABala <= 0) {
+                this.retardoABala = 10;
+                this.disparo();
             }
         }
 
@@ -225,18 +242,39 @@ Nave = function () {
 };
 Nave.prototype = new Sprite();
 
+Bala = function () {
+    this.init("bala", [0, 0]);
+    this.postMove = this.wrapPostMove;
+
+    this.configTransformacion = function () {};
+    this.dibujar = function () {
+        if (this.visible) {
+            this.contenido.save();
+            this.contenido.lineWidth = 2;
+            this.contenido.beginPath();
+            this.contenido.moveTo(this.x-1, this.y-1);
+            this.contenido.lineTo(this.x+1, this.y+1);
+            this.contenido.moveTo(this.x+1, this.y-1);
+            this.contenido.lineTo(this.x-1, this.y+1);
+            this.contenido.stroke();
+            this.contenido.restore();
+        }
+    };
+};
+Bala.prototype = new Sprite();
+
 Asteroide = function () {
-    this.init("asteroide",
-        [-10, 7,
-            -4, 7,
-            -2, 10,
-            6, 9,
-            6, 4,
-            9, -4,
-            2, -3,
-            -4, -6,
-            -10, -2,
-            -7, -2]);
+    this.init("asteroid",
+        [-10,   0,
+            -5,   7,
+            -3,   4,
+            1,  10,
+            5,   4,
+            10,   0,
+            5,  -6,
+            2, -10,
+            -4, -10,
+            -4,  -5]);
 
     this.color = '#86592d';
     this.solido = true;
@@ -245,8 +283,6 @@ Asteroide = function () {
     this.postMove = this.wrapPostMover;
 };
 Asteroide.prototype = new Sprite();
-
-
 
 Text = {
     renderGlyphs: function (ctx, area, char) {
@@ -301,7 +337,7 @@ Text = {
         this.contenido.translate(x, y);
 
         var pixels = tamanio * 70 / (this.area.resolution * 100);
-        this.contenido.escala(pixels, -1 * pixels);
+        this.contenido.scale(pixels, -1 * pixels);
         this.contenido.beginPath();
         var chars = texto.split('');
         var charsLength = chars.length;
@@ -337,7 +373,7 @@ Juego = {
             if (Math.random() > 0.5) {
                 aster.puntos.reverse();
             }
-            aster.velocidad.rotar = Math.random() * 2 - 1;
+            aster.velocidad.rot = Math.random() * 2 - 1;
             Juego.sprites.push(aster);
         }
     },
@@ -366,18 +402,15 @@ Juego = {
             Juego.crearAsteroides();
             this.state = 'crearNave';
         },
-
         crearNave: function () {
             Juego.nave.x = Juego.canvasWidth / 2;
             Juego.nave.y = Juego.canvasHeight / 2;
-            Juego.nave.rotar = 0;
+            Juego.nave.rot = 0;
             Juego.nave.velocidad.x = 0;
-            Juego.nave.velocidad.y = 0
-			Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
+            Juego.nave.velocidad.y = 0;
             Juego.nave.visible = true;
             this.state = 'run';
         },
-
         run: function () {
             /*opciones juego*/
         },
@@ -395,19 +428,27 @@ $(function () {
     var canvas = $("#canvas");
     Juego.canvasWidth = canvas.width();
     Juego.canvasHeight = canvas.height();
-    var contenido = canvas[0].getContext("2d");
+    var context = canvas[0].getContext("2d");
 
-    Text.contenido = contenido;
+    Text.contenido = context;
     Text.area = vector_battle;
+
     var sprites = [];
     Juego.sprites = sprites;
-    Sprite.prototype.context = contenido;
+    Sprite.prototype.contenido = context;
 
     var nave = new Nave();
     nave.x = Juego.canvasWidth / 2;
     nave.y = Juego.canvasHeight / 2;
     sprites.push(nave);
+    nave.balas = [];
+    for (var i = 0; i < 100; i++) {
+        var objBala = new Bala();
+        nave.balas.push(objBala);
+        sprites.push(objBala);
+    }
     Juego.nave = nave;
+
 
     var i, j = 0;
     var pausa = false;
@@ -429,8 +470,10 @@ $(function () {
     })();
 
     var mainLoop = function () {
-        contenido.clearRect(0, 0, Juego.canvasWidth, Juego.canvasHeight);
+        context.clearRect(0, 0, Juego.canvasWidth, Juego.canvasHeight);
+
         Juego.Control.ejecutar();
+
         frameAcual = Date.now();
         tTranscurrido = frameAcual - ultimoFrame;
         ultimoFrame = frameAcual;
