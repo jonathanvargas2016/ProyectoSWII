@@ -428,14 +428,14 @@ $(function () {
     var canvas = $("#canvas");
     Juego.canvasWidth = canvas.width();
     Juego.canvasHeight = canvas.height();
-    var context = canvas[0].getContext("2d");
+    var contenido = canvas[0].getContext("2d");
 
-    Text.contenido = context;
+    Text.contenido = contenido;
     Text.area = vector_battle;
 
     var sprites = [];
     Juego.sprites = sprites;
-    Sprite.prototype.contenido = context;
+    Sprite.prototype.contenido = contenido;
 
     var nave = new Nave();
     nave.x = Juego.canvasWidth / 2;
@@ -470,7 +470,7 @@ $(function () {
     })();
 
     var mainLoop = function () {
-        context.clearRect(0, 0, Juego.canvasWidth, Juego.canvasHeight);
+        contenido.clearRect(0, 0, Juego.canvasWidth, Juego.canvasHeight);
 
         Juego.Control.ejecutar();
 
