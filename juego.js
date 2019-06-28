@@ -35,15 +35,16 @@ Sprite = function () {
         this.velocidad = {
             x: 0,
             y: 0,
-            rotar: 0
+            rot: 0
         };
 
         this.aceleracion = {
             x: 0,
             y: 0,
-            rotar: 0
+            rot: 0
         };
     };
+    this.hijos = {};
 
     this.rotarBan=true;
     this.color = '#e6e601';
@@ -52,19 +53,17 @@ Sprite = function () {
     this.usado = false;
     this.x = 0;
     this.y = 0;
-    this.rotar = 0;
-    this.scale = 1;
+    this.rot = 0;
+    this.escala = 1;
     this.preMove = null;
     this.postMove = null;
 
     this.run = function (delta) {
-
         this.mover(delta);
-        this.context.save();
+        this.contenido.save();
         this.configTransformacion();
         this.dibujar();
-        this.context.restore();
-
+        this.contenido.restore();
     };
 
     this.mover = function (delta) {
@@ -76,11 +75,11 @@ Sprite = function () {
         this.velocidad.y += this.aceleracion.y * delta;
         this.x += this.velocidad.x * delta;
         this.y += this.velocidad.y * delta;
-        this.rotar += this.velocidad.rotar * delta;
-        if (this.rotar > 360) {
-            this.rotar -= 360;
-        } else if (this.rotar < 0) {
-            this.rotar += 360;
+        this.rot += this.velocidad.rot * delta;
+        if (this.rot > 360) {
+            this.rot -= 360;
+        } else if (this.rot < 0) {
+            this.rot += 360;
         }
 
         if ($.isFunction(this.postMove)) {
@@ -91,33 +90,37 @@ Sprite = function () {
     this.configTransformacion = function () {
         if (!this.visible) return;
 
-        var rad = (this.rotar * Math.PI) / 180;
+        var rad = (this.rot * Math.PI) / 180;
 
-        this.context.translate(this.x, this.y);
-        this.context.rotate(rad);
-        this.context.scale(this.scale, this.scale);
+        this.contenido.translate(this.x, this.y);
+        this.contenido.rotate(rad);
+        this.contenido.scale(this.escala, this.escala);
     };
 
     this.dibujar = function () {
         if (!this.visible) return;
 
-        this.context.lineWidth = 1.0 / this.scale;
-        this.context.strokeStyle = this.color;
-        this.context.fillStyle = this.color;
+        this.contenido.lineWidth = 1.0 / this.escala;
 
-        this.context.beginPath();
+        for (hijo in this.hijos) {
+            this.hijos[hijo].dibujar();
+        }
 
-        this.context.moveTo(this.puntos[0], this.puntos[1]);
+        this.contenido.strokeStyle = this.color;
+        this.contenido.fillStyle = this.color;
+        this.contenido.beginPath();
+        this.contenido.moveTo(this.puntos[0], this.puntos[1]);
+
         for (var i = 1; i < this.puntos.length / 2; i++) {
             var xi = i * 2;
             var yi = xi + 1;
-            this.context.lineTo(this.puntos[xi], this.puntos[yi]);
+            this.contenido.lineTo(this.puntos[xi], this.puntos[yi]);
         }
 
-        this.context.closePath();
-        this.context.stroke();
+        this.contenido.closePath();
+        this.contenido.stroke();
         if (this.solido) {
-            this.context.fill();
+            this.contenido.fill();
         }
     };
 
@@ -133,8 +136,133 @@ Sprite = function () {
             this.y = Juego.canvasHeight;
         }
     };
-
 };
+
+Nave = function () {
+    this.init("ship",
+        [0,8,
+            -3,8,
+            -1.5,6,
+            -4.5,6.6,
+            -4.5,8,
+            -5.4,8,
+            -5.4,6.8,
+            -8,7.2,
+            -7,4,
+            -5.4,2.4,
+            -5.4,-5,
+            -4.8,-6,
+            -4.5,-5,
+            -4.5,1.8,
+            -2.5,-5.2,
+            0,-11,
+            2.5,-5.2,
+            4.5,1.8,
+            4.5,-5,
+            4.8,-6,
+            5.4,-5,
+            5.4,2.4,
+            7,4,
+            8,7.2,
+            5.4,6.8,
+            5.4,8,
+            4.5,8,
+            4.5,6.6,
+            1.5,6,
+            3,8,]);
+
+    this.color = '#8533ff';
+    this.solido = true;
+    this.escala = 2.5;
+
+    this.hijos.escape = new Sprite();
+    this.hijos.escape.solido = true;
+    this.hijos.escape.color = 'red';
+    this.hijos.escape.init("escape",
+        [-3,  6,
+            0, 11,
+            3,  6]);
+
+    this.retardoABala = 0;
+    this.postMove = this.wrapPostMover;
+
+    this.disparo = function() {
+        for (var i = 0; i < this.balas.length; i++) {
+            if (!this.balas[i].visible) {
+                var bullet = this.balas[i];
+                var rad = ((this.rot-90) * Math.PI)/180;
+                var vectorx = Math.cos(rad);
+                var vectory = Math.sin(rad);
+                // mover la punta de la nave
+                bullet.x = this.x + vectorx * 4;
+                bullet.y = this.y + vectory * 4;
+                bullet.velocidad.x = 6 * vectorx + this.velocidad.x;
+                bullet.velocidad.y = 6 * vectory + this.velocidad.y;
+                bullet.visible = true;
+                break;
+            }
+        }
+    }
+
+    this.preMove = function (delta) {
+        if (ESTADO_TECLA.izquierda) {
+            this.velocidad.rot = -6;
+        } else if (ESTADO_TECLA.derecha) {
+            this.velocidad.rot  = 6;
+        } else {
+            this.velocidad.rot  = 0;
+        }
+
+        if (ESTADO_TECLA.arriba) {
+            var rad = ((this.rot-90) * Math.PI)/180;
+            this.aceleracion.x = 0.5 * Math.cos(rad);
+            this.aceleracion.y = 0.5 * Math.sin(rad);
+            this.hijos.escape.visible = Math.random() > 0.1;
+        } else {
+            this.aceleracion.x = 0;
+            this.aceleracion.y = 0;
+            this.hijos.escape.visible = false;
+        }
+
+        if (this.retardoABala > 0) {
+            this.retardoABala -= delta;
+        }
+        if (ESTADO_TECLA.espacio) {
+            if (this.retardoABala <= 0) {
+                this.retardoABala = 10;
+                this.disparo();
+            }
+        }
+
+        // limitar la velocidad de la nave
+        if (Math.sqrt(this.velocidad.x * this.velocidad.x + this.velocidad.y * this.velocidad.y) > 8) {
+            this.velocidad.x *= 0.95;
+            this.velocidad.y *= 0.95;
+        }
+    };
+};
+Nave.prototype = new Sprite();
+
+Bala = function () {
+    this.init("bala", [0, 0]);
+    this.postMove = this.wrapPostMove;
+
+    this.configTransformacion = function () {};
+    this.dibujar = function () {
+        if (this.visible) {
+            this.contenido.save();
+            this.contenido.lineWidth = 2;
+            this.contenido.beginPath();
+            this.contenido.moveTo(this.x-1, this.y-1);
+            this.contenido.lineTo(this.x+1, this.y+1);
+            this.contenido.moveTo(this.x+1, this.y-1);
+            this.contenido.lineTo(this.x-1, this.y+1);
+            this.contenido.stroke();
+            this.contenido.restore();
+        }
+    };
+};
+Bala.prototype = new Sprite();
 
 Vida = function () {
     this.init("vida",
@@ -155,47 +283,25 @@ Vida = function () {
 Vida.prototype= new Sprite();
 
 Asteroide = function () {
-    this.init("asteroide",
-        [-10, 7,
-            -4, 7,
-            -2, 10,
-            6, 9,
-            6, 4,
-            9, -4,
-            2, -3,
-            -4, -6,
-            -10, -2,
-            -7, -2]);
+    this.init("asteroid",
+        [-10,   0,
+            -5,   7,
+            -3,   4,
+            1,  10,
+            5,   4,
+            10,   0,
+            5,  -6,
+            2, -10,
+            -4, -10,
+            -4,  -5]);
 
     this.color = '#86592d';
-    this.solid = true;
+    this.solido = true;
     this.visible = true;
-    this.scale = 5;
+    this.escala = 5;
     this.postMove = this.wrapPostMover;
 };
 Asteroide.prototype = new Sprite();
-
-Nave = function () {
-	var img=document.createElement("img");
-    this.init("nave",
-        [-6,   7,
-            0, -11,
-            6,   7,
-            3,  4,
-            2,  7,
-            1,  4,
-            0,  7,
-            -1, 4,
-            -2, 7,
-            -3, 4,
-        ]);
-
-    this.color = '#8533ff';
-    this.solid = true;
-    this.scale = 3;
-
-};
-Nave.prototype = new Sprite();
 
 Text = {
     renderGlyphs: function (ctx, area, char) {
@@ -266,7 +372,11 @@ Text = {
 };
 
 Juego = {
-    canvasWidth: 1300,
+
+    vidas: 0,
+    puntaje: 0,
+    totalAsteroids: 5,
+    canvasWidth: 800,
     canvasHeight: 600,
     sprites: [],
     nave: null,
@@ -295,7 +405,7 @@ Juego = {
             if (Math.random() > 0.5) {
                 aster.puntos.reverse();
             }
-            aster.velocidad.rotar = Math.random() * 2 - 1;
+            aster.velocidad.rot = Math.random() * 2 - 1;
             Juego.sprites.push(aster);
         }
     },
@@ -303,7 +413,7 @@ Juego = {
     Control: {
         boot: function () {        	
             Juego.crearVidas(1);
-            Juego.crearAsteroides(10);
+            Juego.crearAsteroides(this.totalAsteroids);
             this.state = 'esperar';
         },
 
@@ -319,23 +429,25 @@ Juego = {
         },
 
         inicio: function () {
+            Juego.puntaje = 0;
+            Juego.vidas = 2;
+            Juego.totalAsteroids = 2;
             Juego.crearAsteroides();
             this.state = 'crearNave';
-
         },
-
         crearNave: function () {
             Juego.nave.x = Juego.canvasWidth / 2;
             Juego.nave.y = Juego.canvasHeight / 2;
-            Juego.nave.rotar = 0;
+            Juego.nave.rot = 0;
             Juego.nave.velocidad.x = 0;
-            Juego.nave.velocidad.y = 0
-			
-			Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
-			Text.renderTexto('Vidas: 0003', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
-
+            Juego.nave.velocidad.y = 0;
+			      Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
+			      Text.renderTexto('Vidas: 0003', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
             Juego.nave.visible = true;
-			
+            this.state = 'run';
+        },
+        run: function () {
+            /*opciones juego*/
         },
 
         ejecutar: function () {
@@ -355,15 +467,23 @@ $(function () {
 
     Text.contenido = contenido;
     Text.area = vector_battle;
+
     var sprites = [];
     Juego.sprites = sprites;
-    Sprite.prototype.context = contenido;
+    Sprite.prototype.contenido = contenido;
 
     var nave = new Nave();
     nave.x = Juego.canvasWidth / 2;
     nave.y = Juego.canvasHeight / 2;
     sprites.push(nave);
+    nave.balas = [];
+    for (var i = 0; i < 100; i++) {
+        var objBala = new Bala();
+        nave.balas.push(objBala);
+        sprites.push(objBala);
+    }
     Juego.nave = nave;
+
 
     var i, j = 0;
     var pausa = false;
@@ -386,7 +506,9 @@ $(function () {
 
     var mainLoop = function () {
         contenido.clearRect(0, 0, Juego.canvasWidth, Juego.canvasHeight);
+
         Juego.Control.ejecutar();
+
         frameAcual = Date.now();
         tTranscurrido = frameAcual - ultimoFrame;
         ultimoFrame = frameAcual;

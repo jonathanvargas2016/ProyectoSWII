@@ -1,8 +1,8 @@
-canvas { border:1px solid black; top:0px; left:0px; }
+#canvas { border:1px solid black; top:0px; left:0px; }
 .boton { position:absolute; border:1px solid black; }
-controles-izquierdos { position:absolute; left:1px; bottom:0px; display:none; }
-controles-derechos { position:absolute; right:1px; bottom:0px; display:none; }
-arriba { width:200px; height:100px; bottom:100px;}
-izquierda { width:100px; height:100px; bottom:0px;}
-derecha { width:100px; height:100px; bottom:0px; left:100px; }
-espacio { width:200px; height:200px; bottom:0px; right:0px; }
+#controles-izquierdos { position:absolute; left:1px; bottom:0px; display:none; }
+#controles-derechos { position:absolute; right:1px; bottom:0px; display:none; }
+#arriba { width:200px; height:100px; bottom:100px;}
+#izquierda { width:100px; height:100px; bottom:0px;}
+#derecha { width:100px; height:100px; bottom:0px; left:100px; }
+#espacio { width:200px; height:200px; bottom:0px; right:0px; }
