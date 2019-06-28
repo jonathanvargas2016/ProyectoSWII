@@ -46,7 +46,8 @@ Sprite = function () {
     };
     this.hijos = {};
 
-    this.color = 'black';
+    this.rotarBan=true;
+    this.color = '#e6e601';
     this.solido = true;
     this.visible = false;
     this.usado = false;
@@ -263,6 +264,24 @@ Bala = function () {
 };
 Bala.prototype = new Sprite();
 
+Vida = function () {
+    this.init("vida",
+        [0,   0,
+        10,10,
+        20,0,
+        15,-10,
+        10,-5,
+        5,-10
+        ]);
+
+    this.color = '#FF3333';
+    this.solid = true;
+    this.visible = true;
+    this.scale = 1;    
+    this.postMove = this.wrapPostMover;
+};
+Vida.prototype= new Sprite();
+
 Asteroide = function () {
     this.init("asteroid",
         [-10,   0,
@@ -362,6 +381,19 @@ Juego = {
     sprites: [],
     nave: null,
 
+    crearVidas: function (numero) {
+        for (var i = 0; i < numero; i++) {
+            var vida = new Vida();
+            vida.x = Math.random() * this.canvasWidth;
+            vida.y = 0;
+            vida.velocidad.x = Math.random() * 4 - 2;
+            vida.velocidad.y = Math.random() * 4 - 2;
+            vida.rotar=0;
+            Juego.sprites.push(vida);
+            //await sleep(50000);
+        }
+    },
+
     crearAsteroides: function (numero) {
         if (!numero) numero = this.totalAsteroids;
         for (var i = 0; i < numero; i++) {
@@ -379,14 +411,15 @@ Juego = {
     },
 
     Control: {
-        boot: function () {
+        boot: function () {        	
+            Juego.crearVidas(1);
             Juego.crearAsteroides(this.totalAsteroids);
             this.state = 'esperar';
         },
 
         esperar: function () {
             Text.renderTexto('PROYECTO SOFTWARE II', 30, Juego.canvasWidth / 2 + 200, Juego.canvasHeight);
-            Text.renderTexto('ASTEROIDES', 40, Juego.canvasWidth / 2 - 140, Juego.canvasHeight / 5);
+            Text.renderTexto('Star SHIP', 40, Juego.canvasWidth / 2 - 140, Juego.canvasHeight / 5);
             Text.renderTexto('Presione espacio para comenzar', 36, Juego.canvasWidth / 2 - 370, Juego.canvasHeight / 2);
             if (ESTADO_TECLA.espacio || window.gameStart) {
                 ESTADO_TECLA.espacio = false;
@@ -408,6 +441,8 @@ Juego = {
             Juego.nave.rot = 0;
             Juego.nave.velocidad.x = 0;
             Juego.nave.velocidad.y = 0;
+			      Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
+			      Text.renderTexto('Vidas: 0003', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
             Juego.nave.visible = true;
             this.state = 'run';
         },
