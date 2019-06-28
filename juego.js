@@ -440,14 +440,13 @@ Juego = {
             Juego.nave.y = Juego.canvasHeight / 2;
             Juego.nave.rot = 0;
             Juego.nave.velocidad.x = 0;
-            Juego.nave.velocidad.y = 0;
-			      Text.renderTexto('Contador: 0000', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 20);
-			      Text.renderTexto('Vidas: 0003', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
+            Juego.nave.velocidad.y = 0;			     
             Juego.nave.visible = true;
             this.state = 'run';
         },
         run: function () {
-            /*opciones juego*/
+           Text.renderTexto('Puntaje: 0000', 20, Juego.canvasWidth / 2 +480 , Juego.canvasHeight / 20);
+           Text.renderTexto('Vidas: 0003', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
         },
 
         ejecutar: function () {
