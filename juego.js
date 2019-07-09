@@ -406,7 +406,7 @@ Nave = function () {
 
     this.retardoABala = 0;
     this.postMove = this.wrapPostMover;
-    this.objetosColisionar = ["asteroide"];
+    this.objetosColisionar = ["asteroide","vida"];
 
     this.preMove = function (delta) {
         if (ESTADO_TECLA.izquierda) {
@@ -433,7 +433,7 @@ Nave = function () {
         }
         if (ESTADO_TECLA.espacio) {
             if (this.retardoABala <= 0) {
-                this.retardoABala = 10;
+                this.retardoABala = 6;
                 for (var i = 0; i < this.balas.length; i++) {
                     if (!this.balas[i].visible) {
                         var bala = this.balas[i];
@@ -460,19 +460,28 @@ Nave = function () {
     };
 
     this.colision = function (objeto) {
-        Juego.explosionObjetos(objeto.x, objeto.y);
-        //Juego.Control.state = 'player_died';
-        this.visible = false;
-        this.nodoActual.dejar(this);
-        this.nodoActual = null;
-        Juego.vidas--;
+        if(objeto.nombre=="asteroide") {
+            Juego.explosionObjetos(objeto.x, objeto.y);
+            Juego.Control.state = 'jugadorMuerto';
+            this.visible = false;
+            this.nodoActual.dejar(this);
+            this.nodoActual = null;
+            Juego.vidas--;
+        }
+        if(objeto.nombre=="vida"){
+            Juego.explosionObjetos(objeto.x, objeto.y);
+            this.visible = true;
+            this.nodoActual.dejar(this);
+            this.nodoActual = null;
+            Juego.vidas++;
+        }
     };
 };
 Nave.prototype = new Sprite();
 
 Bala = function () {
     this.init("bala", [0, 0]);
-    this.timepo = 0;
+    this.tiempo = 0;
     this.rutaH = false;
     this.rutaV = false;
     this.postMove = this.wrapPostMove;
@@ -480,7 +489,7 @@ Bala = function () {
     this.dibujar = function () {
         if (this.visible) {
             this.contenido.save();
-            this.contenido.lineWidth = 2;
+            this.contenido.lineWidth = 3;
             this.contenido.beginPath();
             this.contenido.moveTo(this.x-1, this.y-1);
             this.contenido.lineTo(this.x+1, this.y+1);
@@ -493,15 +502,15 @@ Bala = function () {
 
     this.preMove = function (delta) {
         if (this.visible) {
-            this.timepo += delta;
+            this.tiempo += delta;
         }
-        if (this.timepo > 50) {
+        if (this.tiempo > 200) {
             this.visible = false;
-            this.timepo = 0;
+            this.tiempo = 0;
         }
     };
     this.colision = function (objeto) {
-        this.timepo = 0;
+        this.tiempo = 0;
         this.visible = false;
         this.nodoActual.dejar(this);
         this.nodoActual = null;
@@ -527,6 +536,13 @@ Vida = function () {
     this.visible = true;
     this.escala = 1;
     this.postMove = this.wrapPostMover;
+    this.objetosColisionar = ["nave"];
+
+    this.colision = function (objeto) {
+        this.visible = false;
+        this.nodoActual.dejar(this);
+        this.nodoActual = null;
+    };
 };
 Vida.prototype= new Sprite();
 
@@ -740,7 +756,6 @@ Juego = {
             vida.velocidad.y = Math.random() * 4 - 2;
             vida.rotar=0;
             Juego.sprites.push(vida);
-            //await sleep(50000);
         }
     },
 
@@ -796,10 +811,11 @@ Juego = {
             }
             Juego.puntaje = 0;
             Juego.vidas = 2;
-            Juego.totalAsteroids = 2;
+            Juego.totalAsteroids = 1;
             Juego.crearAsteroides();
             this.state = 'crearNave';
         },
+
         crearNave: function () {
             Juego.nave.x = Juego.canvasWidth / 2;
             Juego.nave.y = Juego.canvasHeight / 2;
@@ -811,16 +827,57 @@ Juego = {
                 this.state = 'run';
             }
         },
+
         run: function () {
-           Text.renderTexto('Puntaje: 0000', 20, Juego.canvasWidth / 2 +480 , Juego.canvasHeight / 20);
-           Text.renderTexto('Vidas: 0003', 20, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
             for (var i = 0; i < Juego.sprites.length; i++) {
                 if (Juego.sprites[i].nombre == 'asteroide') {
                     break;
                 }
             }
+            if (i == Juego.sprites.length) {
+                this.state = 'nuevoNivel';
+            }
         },
 
+        nuevoNivel: function () {
+            Text.renderTexto('NUEVO NIVEL', 50, Juego.canvasWidth/2 - 190, Juego.canvasHeight/2 + 10);
+            if (this.timer == null) {
+                this.timer = Date.now();
+            }
+            if (Date.now() - this.timer > 3000) {
+                this.timer = null;
+                Juego.totalAsteroids++;
+                if (Juego.totalAsteroids > 12) Juego.totalAsteroids = 12;
+                Juego.crearAsteroides();
+                this.state = 'run';
+            }
+        },
+
+        jugadorMuerto: function () {
+            if (Juego.vidas <= 0) {
+                this.state = 'finJuego';
+            } else {
+                if (this.timer == null) {
+                    this.timer = Date.now();
+                }
+                if (Date.now() - this.timer > 1000) {
+                    this.timer = null;
+                    this.state = 'crearNave';
+                }
+            }
+        },
+        finJuego: function () {
+            Text.renderTexto('SEGUNDA ES TODO :v', 50, Juego.canvasWidth/2 - 280, Juego.canvasHeight/2 + 10);
+            if (this.timer == null) {
+                this.timer = Date.now();
+            }
+            if (Date.now() - this.timer > 6000) {
+                this.timer = null;
+                this.state = 'esperar';
+            }
+
+            window.gameStart = false;
+        },
         ejecutar: function () {
             this[this.state]();
         },
@@ -942,6 +999,13 @@ $(function () {
             }
         }
 
+        //Vidas
+        var vidasTexto = 'Vidas: '+Juego.vidas
+        Text.renderTexto(vidasTexto, 21, Juego.canvasWidth / 2 +490 , Juego.canvasHeight / 10);
+
+        //Puntaje
+        var puntajeTexto = 'Puntaje: '+Juego.puntaje;
+        Text.renderTexto(puntajeTexto, 21, Juego.canvasWidth / 2 +480 , Juego.canvasHeight / 20);
 
         if (pausa) {
             Text.renderTexto('PAUSA', 30, 0, Juego.canvasHeight / 5 - 95);
