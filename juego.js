@@ -736,7 +736,7 @@ Text = {
     contenido: null,
     area: null
 };
-
+var nombreJugador="";
 Juego = {
 
     vidas: 0,
@@ -782,6 +782,7 @@ Juego = {
         xplosion.visible = true;
         Juego.sprites.push(xplosion);
     },
+
 
     Control: {
         boot: function () {        	
@@ -855,7 +856,10 @@ Juego = {
 
         jugadorMuerto: function () {
             if (Juego.vidas <= 0) {
-                this.state = 'finJuego';
+        		nombreJugador =prompt("Dime tu nombre");
+        		nombreJugador =nombreJugador+";"+Juego.puntaje;
+        		almacenarData(nombreJugador);
+                this.state = 'gameOver';
             } else {
                 if (this.timer == null) {
                     this.timer = Date.now();
@@ -878,6 +882,22 @@ Juego = {
 
             window.gameStart = false;
         },
+
+        gameOver: function () {
+            Text.renderTexto('Fin del juego', 50, Juego.canvasWidth/2 - 280, Juego.canvasHeight/6);
+            for(var i=0;i < storage.length && i < 5;i++){            	
+				Text.renderTexto(obtenerValor(i), 50, Juego.canvasWidth/2 - 45*nombreJugador.length/2, (i+1.5)*Juego.canvasHeight/6 + 10);
+            }
+            if (this.timer == null) {
+                this.timer = Date.now();
+            }
+            if (Date.now() - this.timer > 6000) {
+                this.timer = null;
+                this.state = 'finJuego';
+            }
+
+            window.gameStart = false;
+        },
         ejecutar: function () {
             this[this.state]();
         },
@@ -885,6 +905,49 @@ Juego = {
     }
 
 };
+
+//por que lo pongo aqui... pues, por que soy soltero y hago lo que quiero :v
+//aqui empieza el frankeinstain... si asi se escribe XD
+
+var storage = localStorage;
+
+function almacenarData(data) {
+	if (window.sessionStorage && window.localStorage) {
+		//if(storage.length==0){
+			guardar(storage.length,data);
+		//}else{
+		//	for (var i=0; i < storage.length; i++) {
+		//		var valor=obtenerValor(i);
+		//		var aux=valor.split(";");
+		//		var aux2=data.split(";");
+		//		if(aux[1]<=aux2[1]){
+		//			guardar(i,data);
+		//			for (var j=i+1; j < storage.length; j++) {
+		//				var valor2=obtenerValor(j);
+		//				guardar(j,valor);
+		//				valor=valor2;
+		//			}
+		//			guardar(storage.length,valor);
+		//			break;
+		//		}
+		//	}
+		//}
+	} else {			
+		alert('Unable to save data in localStorage');		
+	}
+}
+		
+function guardar(clave, valor) {//5 mejores puntajes
+ 	storage.setItem(clave, valor);
+}
+
+function obtenerValor(clave) {
+		var valor = storage.getItem(clave);
+		return valor;
+}
+function eliminar() {	 	
+	storage.clear();
+}
 
 
 $(function () {
