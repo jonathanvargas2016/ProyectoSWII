@@ -171,6 +171,7 @@ Nave = function () {
             1.5,6,
             3,8,]);
 
+<<<<<<< Updated upstream
     this.color = '#8533ff';
     this.solido = true;
     this.escala = 2.5;
@@ -184,6 +185,12 @@ Nave = function () {
             3,  6]);
 
     this.retardoABala = 0;
+=======
+    this.color = '#86592d';
+    this.solid = false;
+    this.visible = true;
+    this.scale = 5;
+>>>>>>> Stashed changes
     this.postMove = this.wrapPostMover;
 
     this.disparo = function() {
@@ -372,7 +379,8 @@ Text = {
 };
 
 Juego = {
-
+//variables contador de vidas y puntajes
+//inicializacion de variables.
     vidas: 0,
     puntaje: 0,
     totalAsteroids: 5,
