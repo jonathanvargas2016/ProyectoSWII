@@ -567,7 +567,6 @@ Asteroide = function () {
     this.objetosColisionar = ["bala","nave"];
     this.colision = function (objeto) {
         if (objeto.nombre == "bala") Juego.puntaje += 120 / this.escala;
-        console.log(objeto.nombre);
         this.escala /= 3;
         if (this.escala > 0.5) {
             // romper en fragmentos el asteroide
@@ -698,15 +697,15 @@ Text = {
                         break;
 
                     case 'q':
-                        var cpx = outline[i++];
-                        var cpy = outline[i++];
-                        ctx.quadraticCurveTo(outline[i++], outline[i++], cpx, cpy);
+                        var cpx = contorno[i++];
+                        var cpy = contorno[i++];
+                        ctx.quadraticCurveTo(contorno[i++], contorno[i++], cpx, cpy);
                         break;
 
                     case 'b':
-                        var x = outline[i++];
-                        var y = outline[i++];
-                        ctx.bezierCurveTo(outline[i++], outline[i++], outline[i++], outline[i++], x, y);
+                        var x = contorno[i++];
+                        var y = contorno[i++];
+                        ctx.bezierCurveTo(contorno[i++], contorno[i++], contorno[i++], contorno[i++], x, y);
                         break;
                 }
             }
@@ -746,6 +745,29 @@ Juego = {
     canvasHeight: 600,
     sprites: [],
     nave: null,
+    contador: 0,
+    storage : localStorage,
+
+    almacenarData:  function (data) {
+        if (window.sessionStorage && window.localStorage) {
+            Juego.guardar(Juego.storage.length,data);
+        } else {
+            alert('Unable to save data in localStorage');
+        }
+    },
+
+    guardar: function (clave, valor) {//5 mejores puntajes
+        Juego.storage.setItem(clave, valor);
+    },
+
+    obtenerValor: function(clave) {
+        var valor = Juego.storage.getItem(clave);
+        return valor;
+    },
+
+    eliminar:   function () {
+        storage.clear();
+    },
 
     crearVidas: function (numero) {
         for (var i = 0; i < numero; i++) {
@@ -858,7 +880,7 @@ Juego = {
             if (Juego.vidas <= 0) {
         		nombreJugador =prompt("Dime tu nombre");
         		nombreJugador =nombreJugador+";"+Juego.puntaje;
-        		almacenarData(nombreJugador);
+        		Juego.almacenarData(nombreJugador);
                 this.state = 'gameOver';
             } else {
                 if (this.timer == null) {
@@ -871,6 +893,7 @@ Juego = {
             }
         },
         finJuego: function () {
+            Juego.contador = 0;
             Text.renderTexto('SEGUNDA ES TODO :v', 50, Juego.canvasWidth/2 - 280, Juego.canvasHeight/2 + 10);
             if (this.timer == null) {
                 this.timer = Date.now();
@@ -884,10 +907,15 @@ Juego = {
         },
 
         gameOver: function () {
+
+            Juego.contador++;
+
             Text.renderTexto('Fin del juego', 50, Juego.canvasWidth/2 - 280, Juego.canvasHeight/6);
-            for(var i=0;i < storage.length && i < 5;i++){            	
-				Text.renderTexto(obtenerValor(i), 50, Juego.canvasWidth/2 - 45*nombreJugador.length/2, (i+1.5)*Juego.canvasHeight/6 + 10);
+
+            for (var i = 0; i < Juego.storage.length && i < 5; i++) {
+                Text.renderTexto(Juego.obtenerValor(i), 50, Juego.canvasWidth/2 - 45*nombreJugador.length/2, (i+1.5)*Juego.canvasHeight/6 + 10);
             }
+
             if (this.timer == null) {
                 this.timer = Date.now();
             }
@@ -909,7 +937,7 @@ Juego = {
 //por que lo pongo aqui... pues, por que soy soltero y hago lo que quiero :v
 //aqui empieza el frankeinstain... si asi se escribe XD
 
-var storage = localStorage;
+/*var storage = localStorage;
 
 function almacenarData(data) {
 	if (window.sessionStorage && window.localStorage) {
@@ -947,7 +975,7 @@ function obtenerValor(clave) {
 }
 function eliminar() {	 	
 	storage.clear();
-}
+}*/
 
 
 $(function () {
